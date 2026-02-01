@@ -64,7 +64,7 @@ async function handleCekOngkir() {
     try {
         const payload = {
             origin_id: ORIGIN_ID,
-            destination_name: alamatTujuan, // Data ini yang tadi dianggap kosong
+            destination_area: alamatTujuan, // Data ini yang tadi dianggap kosong
             items: [{
                 name: selectedProduct.name.substring(0, 40),
                 value: parseInt(selectedProduct.price),
@@ -130,5 +130,6 @@ function kirimKeWhatsApp() {
 
 // Jalankan
 loadProducts();
+
 
 
