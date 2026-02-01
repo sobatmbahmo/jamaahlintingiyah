@@ -7,10 +7,10 @@ const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let selectedProduct = null;
-let originID = null;
+let originID = 679c6d59f303c70012920216;
 
 // 2. AMBIL ORIGIN ID (LOKASI SURABAYA) OTOMATIS
-async function fetchOrigin() {
+// async function fetchOrigin() {
     try {
         const response = await fetch('https://api.biteship.com/v1/maps/origins', {
             headers: { 'Authorization': BITESHIP_API_KEY }
@@ -137,4 +137,5 @@ function kirimKeWhatsApp() {
 // Jalankan saat halaman dibuka
 fetchOrigin();
 loadProducts();
+
 
