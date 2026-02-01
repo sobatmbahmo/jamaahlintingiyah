@@ -1,7 +1,9 @@
 // 1. KUNCI KONEKSI (Data dari catatan Anda)
-const SUPABASE_URL = 'https://enw...supabase.co'; // Sesuaikan dengan URL Supabase Anda
-const SUPABASE_KEY = 'sb_pub...'; // Gunakan API Key (Anon Key) dari catatan
-const BITESHIP_API_KEY = 'biteship_live...'; // API Key Biteship Live Anda
+const SUPABASE_URL = 'https://enwngiuiqcnbonhinctl.supabase.co; // Sesuaikan dengan URL Supabase Anda
+const SUPABASE_KEY = 'sb_publishable_9qtNidZ7beAGgAMuMmW2ZA_i9Cl-tE9; // Gunakan API Key (Anon Key) dari catatan
+const BITESHIP_API_KEY = 'biteship_live.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSkFNQUFITElOVElOR0lZQUgiLCJ1c2VySWQiOiI2OTdlNjQ0Y2RmMTUwNDMwOWM0ZWI1YjMiLCJpYXQiOjE3Njk4OTE0OTh9.ko5L08aova8b2N8rJ1roFKIsKZeUpqMPdjJx7jZjjos
+
+; // API Key Biteship Live Anda
 
 // Inisialisasi Supabase
 const { createClient } = supabase;
@@ -81,3 +83,4 @@ function kirimKeWhatsApp() {
 // Jalankan saat awal
 fetchOriginID();
 loadProducts();
+
