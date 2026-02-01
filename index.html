@@ -3,57 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jamaah Lintingiyah - Katalog Resmi</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Jamaah Lintingiyah Store</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #e67e22;
-            --light: #ecf0f1;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--light); color: var(--primary); margin: 0; padding: 20px; }
-        header { text-align: center; padding: 40px 0; background: var(--primary); color: white; border-radius: 8px; margin-bottom: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .order-section { background: white; margin-top: 30px; padding: 25px; border-radius: 8px; }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: var(--accent); color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #ccc; }
-        .shipping-item { background: #f9f9f9; padding: 10px; margin: 5px 0; border-left: 4px solid var(--accent); cursor: pointer; }
-        .shipping-item:hover { background: #eee; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        .card { background: #2d2d2d; border: 1px solid #d4af37; padding: 15px; margin-bottom: 10px; border-radius: 10px; }
+        button { background: #d4af37; color: black; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #555; background: #333; color: white; box-sizing: border-box; }
+        #form-pesanan { display: none; margin-top: 30px; padding: 20px; border-top: 2px solid #d4af37; }
+        .shipping-item { background: #333; border: 1px solid #555; padding: 10px; margin: 5px 0; cursor: pointer; border-radius: 5px; }
+        .shipping-item:hover { border-color: #d4af37; }
     </style>
 </head>
 <body>
 
-<div class="container">
     <header>
-        <h1>Jamaah Lintingiyah</h1>
-        <p>Surabaya | CS: 085700800278</p>
+        <h1 style="color: #d4af37; text-align: center;">JAMAAH LINTINGIYAH</h1>
+        <p style="text-align: center;">Solusi Tingwe Studio Kualitas Premium</p>
     </header>
 
-    <div id="product-list" class="product-grid">
-        <p style="text-align: center;">Sedang mengambil produk...</p>
-    </div>
+    <div id="product-list">Sedang memuat katalog...</div>
 
-    <div class="order-section" id="form-pesanan" style="display:none;">
-        <h3>Formulir Pengiriman</h3>
-        <p id="selected-product-info" style="font-weight: bold; color: var(--accent);"></p>
+    <div id="form-pesanan">
+        <h2 style="color: #d4af37;">Form Pemesanan</h2>
+        <div id="selected-product-info" style="margin-bottom: 15px; color: #00ff00;"></div>
         
-        <input type="text" id="buyer-name" placeholder="Nama Lengkap Penerima">
-        <input type="text" id="destination-area" placeholder="Ketik Kecamatan Tujuan (Contoh: Wonokromo)">
-        <button id="btn-cek-ongkir" onclick="handleCekOngkir()">Cek Ongkir</button>
+        <label>Nama Penerima:</label>
+        <input type="text" id="buyer-name" placeholder="Masukkan nama lengkap">
+
+        <label>Kecamatan & Kota Tujuan:</label>
+        <input type="text" id="destination-area" placeholder="Contoh: Wonokromo, Surabaya">
+        
+        <button onclick="handleCekOngkir()" style="margin-bottom: 20px;">CEK HARGA ONGKIR</button>
 
         <div id="shipping-options"></div>
 
-        <div id="final-summary" style="display:none; margin-top: 20px; padding: 15px; background: #e8f6f3;">
-            <p id="summary-text"></p>
-            <button onclick="kirimKeWhatsApp()" style="background: #25d366;">Pesan Sekarang via WhatsApp</button>
+        <div id="final-summary" style="display: none; background: #444; padding: 15px; border-radius: 10px; margin-top: 20px;">
+            <div id="summary-text"></div>
+            <button onclick="kirimKeWhatsApp()" style="background: #25d366; color: white; margin-top: 10px;">PESAN VIA WHATSAPP</button>
         </div>
     </div>
-</div>
 
-<script src="app.js"></script>
-
+    <script src="app.js"></script>
 </body>
 </html>
