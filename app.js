@@ -87,61 +87,67 @@ async function handleCekOngkir() {
     const destination = document.getElementById('destination-area').value;
     const resultDiv = document.getElementById('shipping-options');
 
+    // 1. Validasi Input Dasar
     if (!destination || destination.length < 3) return alert("Ketik nama kecamatan tujuan dengan lengkap!");
-    if (!selectedProduct) return alert("Pilih produk terlebih dahulu!");
+    if (!selectedProduct) return alert("Silakan klik tombol 'Pilih Produk' pada salah satu barang terlebih dahulu!");
 
     resultDiv.innerHTML = "🔍 Sedang menghitung ongkir...";
 
     try {
+        // 2. Pembersihan Data (Data Cleaning)
+        // Memastikan tidak ada data undefined atau null yang terkirim
+        const itemName = selectedProduct.name || "Produk Jamaah Lintingiyah";
+        const itemPrice = parseInt(selectedProduct.price) || 0;
+        const itemWeight = parseInt(selectedProduct.weight) || 100; // Default 100g jika data nol
+
+        const requestBody = {
+            origin_id: ORIGIN_ID,
+            destination_name: destination,
+            items: [{
+                name: itemName.substring(0, 49), // Nama produk maksimal 50 karakter sesuai aturan Biteship
+                description: "Produk Tobacco",
+                value: itemPrice,
+                weight: itemWeight,
+                quantity: 1
+            }]
+        };
+
+        console.log("Data dikirim ke Biteship:", requestBody); // Untuk cek di Inspect Console
+
         const response = await fetch('https://api.biteship.com/v1/rates/couriers', {
             method: 'POST',
             headers: { 
                 'Authorization': BITESHIP_API_KEY, 
                 'Content-Type': 'application/json' 
             },
-            body: JSON.stringify({
-                origin_id: ORIGIN_ID,
-                destination_name: destination,
-                items: [{
-                    name: selectedProduct.name,
-                    quantity: 1,
-                    value: selectedProduct.price,
-                    weight: selectedProduct.weight
-                }]
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.pricing) {
+            if (data.pricing.length === 0) {
+                resultDiv.innerHTML = "<p style='color:orange;'>Kurir tidak tersedia untuk wilayah ini. Coba ketik: Nama Kecamatan, Nama Kota.</p>";
+                return;
+            }
+
             resultDiv.innerHTML = data.pricing.map(s => `
-                <div class="shipping-item" onclick="setFinalShipping('${s.courier_name}', '${s.courier_service}', ${s.price})">
-                    <input type="radio" name="kurir"> 
+                <div class="shipping-item" style="border: 1px solid #d4af37; padding: 10px; margin: 10px 0; cursor: pointer; border-radius: 8px;" 
+                     onclick="setFinalShipping('${s.courier_name}', '${s.courier_service}', ${s.price})">
+                    <input type="radio" name="kurir_pilihan">
                     <strong>${s.courier_name.toUpperCase()}</strong> (${s.courier_service}) <br>
                     Harga: Rp${s.price.toLocaleString('id-ID')} | Estimasi: ${s.duration}
                 </div>
             `).join('');
         } else {
-            resultDiv.innerHTML = "<p style='color:orange;'>Kecamatan tidak ditemukan. Coba ketik lebih detail (Contoh: Wonokromo, Surabaya).</p>";
+            // Tampilkan pesan error spesifik dari Biteship
+            const pesanError = data.error || data.message || "Kecamatan tidak dikenali.";
+            resultDiv.innerHTML = `<p style='color:red;'>Biteship Error: ${pesanError}</p>`;
         }
     } catch (err) {
-        resultDiv.innerHTML = "<p style='color:red;'>Gagal mengecek ongkir. Cek koneksi atau saldo Biteship.</p>";
+        console.error("Technical Error:", err);
+        resultDiv.innerHTML = "<p style='color:red;'>Gagal terhubung ke Biteship. Pastikan koneksi internet lancar.</p>";
     }
-}
-
-// 5. SET KURIR & TAMPILKAN TOTAL
-function setFinalShipping(courier, service, price) {
-    finalShipping = { courier, service, price };
-    const total = selectedProduct.price + price;
-    
-    const summaryDiv = document.getElementById('final-summary');
-    summaryDiv.style.display = 'block';
-    document.getElementById('summary-text').innerHTML = `
-        <p>Harga Produk: Rp${selectedProduct.price.toLocaleString('id-ID')}</p>
-        <p>Ongkir (${courier} - ${service}): Rp${price.toLocaleString('id-ID')}</p>
-        <hr>
-        <h3>Total Bayar: Rp${total.toLocaleString('id-ID')}</h3>
-    `;
 }
 
 // 6. KIRIM KE WHATSAPP ADMIN
@@ -173,5 +179,6 @@ function kirimKeWhatsApp() {
 
 // Jalankan pengambilan produk saat halaman dibuka
 loadProducts();
+
 
 
