@@ -4,6 +4,9 @@ const SUPABASE_KEY = 'sb_publishable_9qtNidZ7beAGgAMuMmW2ZA_i9Cl-tE9';
 const BITESHIP_API_KEY = 'biteship_live.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSkFNQUFITElOVElOR0lZQUgiLCJ1c2VySWQiOiI2OTdlNjQ0Y2RmMTUwNDMwOWM0ZWI1YjMiLCJpYXQiOjE3Njk4OTE0OTh9.ko5L08aova8b2N8rJ1roFKIsKZeUpqMPdjJx7jZjjos'; 
 const ORIGIN_ID = '679c6d59f303c70012920216'; 
 
+// ID Lokasi Rusunawa Gunungsari Anda
+const ORIGIN_ID = '679c6d59f303c70012920216'; 
+
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -16,17 +19,15 @@ async function loadProducts() {
     try {
         const { data: products, error } = await _supabase.from('products').select('*').order('name');
         if (error) throw error;
-
         list.innerHTML = products.map(p => `
-            <div class="card">
+            <div class="card" style="border:1px solid #d4af37; padding:15px; margin-bottom:10px; border-radius:10px;">
                 <h3>${p.name}</h3>
-                <p style="color: #bbb; font-size: 0.9em;">${p.description}</p>
                 <p>Harga: <b>Rp${p.price.toLocaleString('id-ID')}</b></p>
-                <button onclick="pilihProduk('${p.name}', ${p.price}, ${p.weight_grams})">PILIH PRODUK</button>
+                <button onclick="pilihProduk('${p.name}', ${p.price}, ${p.weight_grams})" style="background:#d4af37; border:none; padding:10px; width:100%; font-weight:bold; cursor:pointer;">PILIH PRODUK</button>
             </div>
         `).join('');
     } catch (err) {
-        list.innerHTML = "Gagal memuat database.";
+        list.innerHTML = "Gagal memuat produk.";
     }
 }
 
@@ -38,35 +39,30 @@ window.pilihProduk = function(name, price, weight) {
     document.getElementById('form-pesanan').scrollIntoView({ behavior: 'smooth' });
 };
 
-// 4. CEK ONGKIR (DENGAN PERBAIKAN DESTINATION NAME)
+// 4. CEK ONGKIR (DENGAN VALIDASI INPUT)
 async function handleCekOngkir() {
-    const inputArea = document.getElementById('destination-area');
-    const areaTujuan = inputArea ? inputArea.value : "";
+    const areaTujuan = document.getElementById('destination-area').value;
     const resDiv = document.getElementById('shipping-options');
 
-    if (!areaTujuan || areaTujuan.length < 3) return alert("Masukkan Nama Kecamatan & Kota!");
-    if (!selectedProduct) return alert("Pilih produk dulu!");
-
-    resDiv.innerHTML = "🔍 Menghitung ongkir...";
+    if (!areaTujuan || areaTujuan.length < 3) return alert("Masukkan Nama Kecamatan!");
+    
+    resDiv.innerHTML = "🔍 Mencari ongkir...";
 
     try {
         const payload = {
             origin_id: ORIGIN_ID,
-            destination_name: areaTujuan, // Mengambil nilai dari input
+            destination_name: areaTujuan, 
             items: [{
                 name: selectedProduct.name.substring(0, 40),
                 value: parseInt(selectedProduct.price),
-                weight: parseInt(selectedProduct.weight) || 100,
+                weight: parseInt(selectedProduct.weight) || 150,
                 quantity: 1
             }]
         };
 
         const response = await fetch('https://api.biteship.com/v1/rates/couriers', {
             method: 'POST',
-            headers: { 
-                'Authorization': BITESHIP_API_KEY, 
-                'Content-Type': 'application/json' 
-            },
+            headers: { 'Authorization': BITESHIP_API_KEY, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
@@ -74,13 +70,13 @@ async function handleCekOngkir() {
         
         if (data.success && data.pricing.length > 0) {
             resDiv.innerHTML = data.pricing.map(s => `
-                <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})">
+                <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})" style="background:#333; padding:10px; border:1px solid #555; margin:5px 0; cursor:pointer;">
                     <b>${s.courier_name.toUpperCase()}</b> - ${s.courier_service}<br>
-                    Harga: Rp${s.price.toLocaleString('id-ID')} | Estimasi: ${s.duration}
+                    Harga: Rp${s.price.toLocaleString('id-ID')}
                 </div>
             `).join('');
         } else {
-            resDiv.innerHTML = `<p style="color:orange;">Biteship: ${data.message || "Lokasi tidak ditemukan."}</p>`;
+            resDiv.innerHTML = `<p style="color:orange;">Lokasi tidak ditemukan. <b>Tips:</b> Cukup ketik "Wonokromo" atau "Penjaringan", jangan alamat lengkap.</p>`;
         }
     } catch (err) {
         resDiv.innerHTML = "Terjadi kesalahan koneksi.";
@@ -117,6 +113,7 @@ window.kirimKeWhatsApp = function() {
 
 // Start
 loadProducts();
+
 
 
 
