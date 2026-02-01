@@ -41,46 +41,53 @@ window.pilihProduk = function(name, price, weight) {
 
 // 4. CEK ONGKIR (DENGAN VALIDASI INPUT)
 async function handleCekOngkir() {
-    const areaTujuan = document.getElementById('destination-area').value;
+    const inputArea = document.getElementById('destination-area');
+    const areaTujuan = inputArea ? inputArea.value.trim() : "";
     const resDiv = document.getElementById('shipping-options');
 
-    if (!areaTujuan || areaTujuan.length < 3) return alert("Masukkan Nama Kecamatan!");
-    
-    resDiv.innerHTML = "🔍 Mencari ongkir...";
+    if (!areaTujuan || areaTujuan.length < 3) return alert("Masukkan Nama Kecamatan & Kota!");
 
-    try {
-        const payload = {
-            origin_id: ORIGIN_ID,
-            destination_name: areaTujuan, 
-            items: [{
-                name: selectedProduct.name.substring(0, 40),
-                value: parseInt(selectedProduct.price),
-                weight: parseInt(selectedProduct.weight) || 150,
-                quantity: 1
-            }]
-        };
+    resDiv.innerHTML = "🔍 Menghubungkan ke Biteship...";
 
-        const response = await fetch('https://api.biteship.com/v1/rates/couriers', {
-            method: 'POST',
-            headers: { 'Authorization': BITESHIP_API_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    // Jeda 500ms untuk memastikan input sudah terbaca sempurna oleh sistem
+    setTimeout(async () => {
+        try {
+            const payload = {
+                origin_id: "679c6d59f303c70012920216", // ID Rusunawa Gunungsari Anda
+                destination_name: areaTujuan, 
+                items: [{
+                    name: selectedProduct.name.substring(0, 30),
+                    value: parseInt(selectedProduct.price),
+                    weight: parseInt(selectedProduct.weight) || 150,
+                    quantity: 1
+                }]
+            };
 
-        const data = await response.json();
-        
-        if (data.success && data.pricing.length > 0) {
-            resDiv.innerHTML = data.pricing.map(s => `
-                <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})" style="background:#333; padding:10px; border:1px solid #555; margin:5px 0; cursor:pointer;">
-                    <b>${s.courier_name.toUpperCase()}</b> - ${s.courier_service}<br>
-                    Harga: Rp${s.price.toLocaleString('id-ID')}
-                </div>
-            `).join('');
-        } else {
-            resDiv.innerHTML = `<p style="color:orange;">Lokasi tidak ditemukan. <b>Tips:</b> Cukup ketik "Wonokromo" atau "Penjaringan", jangan alamat lengkap.</p>`;
+            const response = await fetch('https://api.biteship.com/v1/rates/couriers', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': 'biteship_live.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSkFNQUFITElOVElOR0lZQUgiLCJ1c2VySWQiOiI2OTdlNjQ0Y2RmMTUwNDMwOWM0ZWI1YjMiLCJpYXQiOjE3Njk4OTE0OTh9.ko5L08aova8b2N8rJ1roFKIsKZeUpqMPdjJx7jZjjos', 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            
+            if (data.success && data.pricing && data.pricing.length > 0) {
+                resDiv.innerHTML = data.pricing.map(s => `
+                    <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})" style="background:#333; padding:12px; border:1px solid #d4af37; margin:8px 0; cursor:pointer; border-radius:8px;">
+                        <strong style="color:#d4af37;">${s.courier_name.toUpperCase()}</strong> - ${s.courier_service}<br>
+                        Harga: Rp${s.price.toLocaleString('id-ID')}
+                    </div>
+                `).join('');
+            } else {
+                resDiv.innerHTML = `<p style="color:orange;">Biteship: ${data.message || "Lokasi tidak ditemukan. Gunakan format: Kecamatan, Kota"}</p>`;
+            }
+        } catch (err) {
+            resDiv.innerHTML = "Gagal terhubung ke sistem pengiriman.";
         }
-    } catch (err) {
-        resDiv.innerHTML = "Terjadi kesalahan koneksi.";
-    }
+    }, 500);
 }
 
 // 5. SET KURIR & WHATSAPP
@@ -113,6 +120,7 @@ window.kirimKeWhatsApp = function() {
 
 // Start
 loadProducts();
+
 
 
 
