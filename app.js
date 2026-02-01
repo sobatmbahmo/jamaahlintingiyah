@@ -10,61 +10,49 @@ const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 let selectedProduct = null;
 let finalShipping = null;
 
-// 2. AMBIL PRODUK DARI DATABASE
+// 2. LOAD PRODUK
 async function loadProducts() {
     const list = document.getElementById('product-list');
-    if(!list) return;
-    
-    list.innerHTML = "<p>Sedang memuat katalog Jamaah...</p>";
-
     try {
         const { data: products, error } = await _supabase.from('products').select('*').order('name');
         if (error) throw error;
 
         list.innerHTML = products.map(p => `
-            <div class="card" style="border:1px solid #d4af37; padding:15px; margin:10px; border-radius:8px; background:#2d2d2d; color:white;">
-                <h4>${p.name}</h4>
-                <p style="font-size:0.8em; color:#bbb;">${p.description}</p>
-                <p><strong>Rp${p.price.toLocaleString('id-ID')}</strong></p>
-                <button onclick="pilihProduk('${p.name}', ${p.price}, ${p.weight_grams})" style="background:#d4af37; color:black; border:none; padding:8px 15px; cursor:pointer; font-weight:bold; border-radius:5px;">PILIH PRODUK</button>
+            <div class="card">
+                <h3>${p.name}</h3>
+                <p style="color: #bbb; font-size: 0.9em;">${p.description}</p>
+                <p>Harga: <b>Rp${p.price.toLocaleString('id-ID')}</b></p>
+                <button onclick="pilihProduk('${p.name}', ${p.price}, ${p.weight_grams})">PILIH PRODUK</button>
             </div>
         `).join('');
     } catch (err) {
-        list.innerHTML = "<p>Gagal memuat produk. Cek API Key Supabase.</p>";
+        list.innerHTML = "Gagal memuat database.";
     }
 }
 
-// 3. FUNGSI PILIH PRODUK
+// 3. PILIH PRODUK
 window.pilihProduk = function(name, price, weight) {
     selectedProduct = { name, price, weight };
-    const formSec = document.getElementById('form-pesanan');
-    if(formSec) {
-        formSec.style.display = 'block';
-        document.getElementById('selected-product-info').innerHTML = `Terpilih: <b>${name}</b> (${weight} gram)`;
-        formSec.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.getElementById('form-pesanan').style.display = 'block';
+    document.getElementById('selected-product-info').innerHTML = `📦 <b>Pesanan:</b> ${name} (${weight}g)`;
+    document.getElementById('form-pesanan').scrollIntoView({ behavior: 'smooth' });
 };
 
-// 4. CEK ONGKIR KE BITESHIP
+// 4. CEK ONGKIR (DENGAN PERBAIKAN DESTINATION NAME)
 async function handleCekOngkir() {
-    // Mengambil teks alamat langsung dari input
-    const inputAlamat = document.getElementById('destination-area');
-    const alamatTujuan = inputAlamat ? inputAlamat.value : "";
+    const inputArea = document.getElementById('destination-area');
+    const areaTujuan = inputArea ? inputArea.value : "";
     const resDiv = document.getElementById('shipping-options');
 
-    if (!alamatTujuan || alamatTujuan.length < 3) {
-        return alert("Harap ketik nama kecamatan tujuan!");
-    }
-    if (!selectedProduct) {
-        return alert("Pilih produk terlebih dahulu!");
-    }
+    if (!areaTujuan || areaTujuan.length < 3) return alert("Masukkan Nama Kecamatan & Kota!");
+    if (!selectedProduct) return alert("Pilih produk dulu!");
 
-    resDiv.innerHTML = "🔍 Sedang menghubungi Biteship...";
+    resDiv.innerHTML = "🔍 Menghitung ongkir...";
 
     try {
         const payload = {
             origin_id: ORIGIN_ID,
-            destination_area: alamatTujuan, // Data ini yang tadi dianggap kosong
+            destination_name: areaTujuan, // Mengambil nilai dari input
             items: [{
                 name: selectedProduct.name.substring(0, 40),
                 value: parseInt(selectedProduct.price),
@@ -84,51 +72,50 @@ async function handleCekOngkir() {
 
         const data = await response.json();
         
-        if (data.success && data.pricing && data.pricing.length > 0) {
+        if (data.success && data.pricing.length > 0) {
             resDiv.innerHTML = data.pricing.map(s => `
-                <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})" 
-                     style="border:1px solid #d4af37; padding:10px; margin:5px 0; cursor:pointer; background:#333; border-radius:8px;">
-                    <strong>${s.courier_name.toUpperCase()}</strong> - ${s.courier_service}<br>
-                    Harga: Rp${s.price.toLocaleString('id-ID')}
+                <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})">
+                    <b>${s.courier_name.toUpperCase()}</b> - ${s.courier_service}<br>
+                    Harga: Rp${s.price.toLocaleString('id-ID')} | Estimasi: ${s.duration}
                 </div>
             `).join('');
         } else {
-            // Jika masih error, tampilkan detail pesan dari Biteship
-            const pesanError = data.error || data.message || "Lokasi tidak ditemukan";
-            resDiv.innerHTML = `<p style="color:orange;">Gagal: ${pesanError}</p>`;
+            resDiv.innerHTML = `<p style="color:orange;">Biteship: ${data.message || "Lokasi tidak ditemukan."}</p>`;
         }
     } catch (err) {
-        resDiv.innerHTML = "<p style='color:red;'>Terjadi gangguan jaringan.</p>";
+        resDiv.innerHTML = "Terjadi kesalahan koneksi.";
     }
 }
 
-// 5. SET FINAL & WHATSAPP
+// 5. SET KURIR & WHATSAPP
 window.setFinal = function(courier, service, price) {
     finalShipping = { courier, service, price };
     const total = selectedProduct.price + price;
     document.getElementById('final-summary').style.display = 'block';
     document.getElementById('summary-text').innerHTML = `
-        Total Produk: Rp${selectedProduct.price.toLocaleString('id-ID')}<br>
-        Ongkir: Rp${price.toLocaleString('id-ID')}<br>
-        <hr><h3>TOTAL: Rp${total.toLocaleString('id-ID')}</h3>
+        <p>Harga Barang: Rp${selectedProduct.price.toLocaleString('id-ID')}</p>
+        <p>Ongkir (${courier}): Rp${price.toLocaleString('id-ID')}</p>
+        <hr>
+        <h3>TOTAL: Rp${total.toLocaleString('id-ID')}</h3>
     `;
 };
 
-function kirimKeWhatsApp() {
+window.kirimKeWhatsApp = function() {
     const nama = document.getElementById('buyer-name').value;
-    if (!nama || !finalShipping) return alert("Lengkapi data!");
+    const alamat = document.getElementById('destination-area').value;
+    if (!nama || !finalShipping) return alert("Lengkapi nama dan pilih kurir!");
 
-    const pesan = `Halo Jamaah Lintingiyah, saya mau pesan:\n\n` +
-                  `Produk: ${selectedProduct.name}\n` +
-                  `Nama: ${nama}\n` +
-                  `Tujuan: ${document.getElementById('destination-area').value}\n` +
-                  `Kurir: ${finalShipping.courier} (${finalShipping.service})\n` +
-                  `Total: Rp${(selectedProduct.price + finalShipping.price).toLocaleString('id-ID')}`;
+    const pesan = `Halo Admin Jamaah Lintingiyah,\n\nSaya ingin memesan:\n` +
+                  `- Produk: ${selectedProduct.name}\n` +
+                  `- Nama: ${nama}\n` +
+                  `- Tujuan: ${alamat}\n` +
+                  `- Kurir: ${finalShipping.courier} (${finalShipping.service})\n` +
+                  `- Total: Rp${(selectedProduct.price + finalShipping.price).toLocaleString('id-ID')}`;
 
     window.open(`https://wa.me/6285700800278?text=${encodeURIComponent(pesan)}`);
-}
+};
 
-// Jalankan
+// Start
 loadProducts();
 
 
