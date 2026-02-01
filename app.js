@@ -2,9 +2,8 @@
 const SUPABASE_URL = 'https://enwngiuiqcnbonhinctl.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_9qtNidZ7beAGgAMuMmW2ZA_i9Cl-tE9'; 
 const BITESHIP_API_KEY = 'biteship_live.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSkFNQUFITElOVElOR0lZQUgiLCJ1c2VySWQiOiI2OTdlNjQ0Y2RmMTUwNDMwOWM0ZWI1YjMiLCJpYXQiOjE3Njk4OTE0OTh9.ko5L08aova8b2N8rJ1roFKIsKZeUpqMPdjJx7jZjjos'; 
-const ORIGIN_ID = '679c6d59f303c70012920216'; 
 
-// ID Lokasi Rusunawa Gunungsari Anda
+// ID Lokasi Rusunawa Gunungsari (Cukup Tulis Sekali)
 const ORIGIN_ID = '679c6d59f303c70012920216'; 
 
 const { createClient } = supabase;
@@ -20,10 +19,10 @@ async function loadProducts() {
         const { data: products, error } = await _supabase.from('products').select('*').order('name');
         if (error) throw error;
         list.innerHTML = products.map(p => `
-            <div class="card" style="border:1px solid #d4af37; padding:15px; margin-bottom:10px; border-radius:10px;">
-                <h3>${p.name}</h3>
+            <div class="card" style="border:1px solid #d4af37; padding:15px; margin-bottom:10px; border-radius:10px; background: #2d2d2d;">
+                <h3 style="color:#d4af37;">${p.name}</h3>
                 <p>Harga: <b>Rp${p.price.toLocaleString('id-ID')}</b></p>
-                <button onclick="pilihProduk('${p.name}', ${p.price}, ${p.weight_grams})" style="background:#d4af37; border:none; padding:10px; width:100%; font-weight:bold; cursor:pointer;">PILIH PRODUK</button>
+                <button onclick="pilihProduk('${p.name}', ${p.price}, ${p.weight_grams})" style="background:#d4af37; border:none; padding:10px; width:100%; font-weight:bold; cursor:pointer; border-radius:5px;">PILIH PRODUK</button>
             </div>
         `).join('');
     } catch (err) {
@@ -39,55 +38,54 @@ window.pilihProduk = function(name, price, weight) {
     document.getElementById('form-pesanan').scrollIntoView({ behavior: 'smooth' });
 };
 
-// 4. CEK ONGKIR (DENGAN VALIDASI INPUT)
+// 4. CEK ONGKIR (DENGAN PENANGANAN ERROR LEBIH BAIK)
 async function handleCekOngkir() {
     const inputArea = document.getElementById('destination-area');
     const areaTujuan = inputArea ? inputArea.value.trim() : "";
     const resDiv = document.getElementById('shipping-options');
 
     if (!areaTujuan || areaTujuan.length < 3) return alert("Masukkan Nama Kecamatan & Kota!");
+    if (!selectedProduct) return alert("Silakan pilih produk terlebih dahulu!");
 
     resDiv.innerHTML = "🔍 Menghubungkan ke Biteship...";
 
-    // Jeda 500ms untuk memastikan input sudah terbaca sempurna oleh sistem
-    setTimeout(async () => {
-        try {
-            const payload = {
-                origin_id: "679c6d59f303c70012920216", // ID Rusunawa Gunungsari Anda
-                destination_name: areaTujuan, 
-                items: [{
-                    name: selectedProduct.name.substring(0, 30),
-                    value: parseInt(selectedProduct.price),
-                    weight: parseInt(selectedProduct.weight) || 150,
-                    quantity: 1
-                }]
-            };
+    // Menggunakan fetch langsung tanpa setTimeout agar lebih responsif
+    try {
+        const payload = {
+            origin_id: ORIGIN_ID,
+            destination_name: areaTujuan, 
+            items: [{
+                name: selectedProduct.name.substring(0, 30),
+                value: parseInt(selectedProduct.price),
+                weight: parseInt(selectedProduct.weight) || 150,
+                quantity: 1
+            }]
+        };
 
-            const response = await fetch('https://api.biteship.com/v1/rates/couriers', {
-                method: 'POST',
-                headers: { 
-                    'Authorization': 'biteship_live.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSkFNQUFITElOVElOR0lZQUgiLCJ1c2VySWQiOiI2OTdlNjQ0Y2RmMTUwNDMwOWM0ZWI1YjMiLCJpYXQiOjE3Njk4OTE0OTh9.ko5L08aova8b2N8rJ1roFKIsKZeUpqMPdjJx7jZjjos', 
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify(payload)
-            });
+        const response = await fetch('https://api.biteship.com/v1/rates/couriers', {
+            method: 'POST',
+            headers: { 
+                'Authorization': BITESHIP_API_KEY, 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(payload)
+        });
 
-            const data = await response.json();
-            
-            if (data.success && data.pricing && data.pricing.length > 0) {
-                resDiv.innerHTML = data.pricing.map(s => `
-                    <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})" style="background:#333; padding:12px; border:1px solid #d4af37; margin:8px 0; cursor:pointer; border-radius:8px;">
-                        <strong style="color:#d4af37;">${s.courier_name.toUpperCase()}</strong> - ${s.courier_service}<br>
-                        Harga: Rp${s.price.toLocaleString('id-ID')}
-                    </div>
-                `).join('');
-            } else {
-                resDiv.innerHTML = `<p style="color:orange;">Biteship: ${data.message || "Lokasi tidak ditemukan. Gunakan format: Kecamatan, Kota"}</p>`;
-            }
-        } catch (err) {
-            resDiv.innerHTML = "Gagal terhubung ke sistem pengiriman.";
+        const data = await response.json();
+        
+        if (data.success && data.pricing && data.pricing.length > 0) {
+            resDiv.innerHTML = data.pricing.map(s => `
+                <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})" style="background:#333; padding:12px; border:1px solid #d4af37; margin:8px 0; cursor:pointer; border-radius:8px;">
+                    <strong style="color:#d4af37;">${s.courier_name.toUpperCase()}</strong> - ${s.courier_service}<br>
+                    Harga: Rp${s.price.toLocaleString('id-ID')} | Estimasi: ${s.duration}
+                </div>
+            `).join('');
+        } else {
+            resDiv.innerHTML = `<p style="color:orange;">Biteship: ${data.message || "Lokasi tidak ditemukan. Gunakan format: Kecamatan, Kota"}</p>`;
         }
-    }, 500);
+    } catch (err) {
+        resDiv.innerHTML = "Gagal terhubung ke sistem pengiriman.";
+    }
 }
 
 // 5. SET KURIR & WHATSAPP
@@ -120,8 +118,3 @@ window.kirimKeWhatsApp = function() {
 
 // Start
 loadProducts();
-
-
-
-
-
