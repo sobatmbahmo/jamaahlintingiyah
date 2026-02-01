@@ -1,6 +1,6 @@
 // 1. KONFIGURASI UTAMA
 // Masukkan URL dan Key anon dari dashboard Supabase Anda
-const SUPABASE_URL = 'https://enwsqidpogskmndyvunv.supabase.co'; 
+const SUPABASE_URL = 'https://enwngiuiqcnbonhinctl.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_9qtNidZ7beAGgAMuMmW2ZA_i9Cl-tE9'; 
 const BITESHIP_API_KEY = 'biteship_live.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSkFNQUFITElOVElOR0lZQUgiLCJ1c2VySWQiOiI2OTdlNjQ0Y2RmMTUwNDMwOWM0ZWI1YjMiLCJpYXQiOjE3Njk4OTE0OTh9.ko5L08aova8b2N8rJ1roFKIsKZeUpqMPdjJx7jZjjos'; 
 
@@ -145,3 +145,4 @@ function kirimKeWhatsApp() {
 
 // Jalankan pengambilan produk saat halaman dibuka
 loadProducts();
+
