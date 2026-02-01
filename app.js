@@ -14,29 +14,57 @@ let selectedProduct = null;
 let finalShipping = null;
 
 // 2. AMBIL PRODUK DARI SUPABASE
-async function loadProducts() {
-    const list = document.getElementById('product-list');
-    list.innerHTML = "<p>Sedang memuat produk...</p>";
+async function handleCekOngkir() {
+    const destination = document.getElementById('destination-area').value;
+    const resultDiv = document.getElementById('shipping-options');
+
+    // 1. Validasi Input
+    if (!destination || destination.length < 3) return alert("Ketik nama kecamatan tujuan dengan lengkap!");
+    if (!selectedProduct) return alert("Pilih produk terlebih dahulu!");
+
+    resultDiv.innerHTML = "🔍 Sedang menghitung ongkir...";
 
     try {
-        const { data: products, error } = await _supabase
-            .from('products')
-            .select('*')
-            .order('name', { ascending: true });
+        // 2. Persiapkan data kirim (Pastikan semua angka adalah Integer)
+        const requestBody = {
+            origin_id: ORIGIN_ID,
+            destination_name: destination,
+            items: [{
+                name: String(selectedProduct.name),
+                description: "Produk Jamaah Lintingiyah",
+                value: parseInt(selectedProduct.price), // Harus angka bulat
+                weight: parseInt(selectedProduct.weight) || 100, // Minimal 100g jika data kosong
+                quantity: 1
+            }]
+        };
 
-        if (error) throw error;
+        const response = await fetch('https://api.biteship.com/v1/rates/couriers', {
+            method: 'POST',
+            headers: { 
+                'Authorization': BITESHIP_API_KEY, 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(requestBody)
+        });
 
-        list.innerHTML = products.map(p => `
-            <div class="card">
-                <h4>${p.name}</h4>
-                <p style="font-size: 0.85em; color: #bbb;">${p.description}</p>
-                <p><strong>Rp${p.price.toLocaleString('id-ID')}</strong></p>
-                <button onclick="pilihProduk('${p.name}', ${p.price}, ${p.weight_grams})">Pilih & Cek Ongkir</button>
-            </div>
-        `).join('');
+        const data = await response.json();
+        
+        if (data.success && data.pricing && data.pricing.length > 0) {
+            resultDiv.innerHTML = data.pricing.map(s => `
+                <div class="shipping-item" style="border:1px solid #d4af37; padding:10px; margin-bottom:5px; cursor:pointer;" 
+                     onclick="setFinalShipping('${s.courier_name}', '${s.courier_service}', ${s.price})">
+                    <strong>${s.courier_name.toUpperCase()}</strong> - ${s.courier_service}<br>
+                    Harga: Rp${s.price.toLocaleString('id-ID')} | Estimasi: ${s.duration}
+                </div>
+            `).join('');
+        } else {
+            // Tampilkan alasan error dari Biteship jika ada
+            const errorMsg = data.error || data.message || "Kecamatan tidak ditemukan.";
+            resultDiv.innerHTML = `<p style='color:orange;'>Gagal: ${errorMsg}. Coba ketik nama Kecamatan dan Kota.</p>`;
+        }
     } catch (err) {
-        console.error(err);
-        list.innerHTML = "<p>Gagal memuat produk. Pastikan RLS Supabase sudah 'Enable read access'.</p>";
+        console.error("Detail Error:", err);
+        resultDiv.innerHTML = "<p style='color:red;'>Terjadi kesalahan teknis. Cek koneksi internet.</p>";
     }
 }
 
@@ -145,4 +173,5 @@ function kirimKeWhatsApp() {
 
 // Jalankan pengambilan produk saat halaman dibuka
 loadProducts();
+
 
