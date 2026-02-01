@@ -1,7 +1,7 @@
 // 1. KONFIGURASI (Pastikan data ini sama dengan catatan Anda)
 const SUPABASE_URL = 'https://enwngiuiqcnbonhinctl.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_9qtNidZ7beAGgAMuMmW2ZA_i9Cl-tE9'; 
-const BITESHIP_API_KEY = 'biteship_live.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSkFNQUFITElOVElOR0lZQUgiLCJ1c2VySWQiOiI2OTdlNjQ0Y2RmMTUwNDMwOWM0ZWI1YjMiLCJpYXQiOjE3Njk4OTE0OTh9.ko5L08aova8b2N8rJ1roFKIsKZeUpqMPdjJx7jZjjos'; 
+const BITESHIP_API_KEY = 'biteship_test.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidGVzdGluZ2FmZmlsaWF0ZSIsInVzZXJJZCI6IjY5N2U2NDRjZGYxNTA0MzA5YzRlYjViMyIsImlhdCI6MTc2OTkzMzcyNn0.LB0yqZP6y2o2oYnp4ETxus4TrWw4KKOjyWDpEpL-jSo'; 
 
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -137,3 +137,4 @@ function kirimKeWhatsApp() {
 // Jalankan saat halaman dibuka
 fetchOrigin();
 loadProducts();
+
