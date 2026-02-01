@@ -47,18 +47,24 @@ window.pilihProduk = function(name, price, weight) {
 
 // 4. CEK ONGKIR KE BITESHIP
 async function handleCekOngkir() {
-    const area = document.getElementById('destination-area').value;
+    // Mengambil teks alamat langsung dari input
+    const inputAlamat = document.getElementById('destination-area');
+    const alamatTujuan = inputAlamat ? inputAlamat.value : "";
     const resDiv = document.getElementById('shipping-options');
 
-    if (!area || area.length < 3) return alert("Ketik kecamatan tujuan!");
-    if (!selectedProduct) return alert("Pilih produk dulu!");
+    if (!alamatTujuan || alamatTujuan.length < 3) {
+        return alert("Harap ketik nama kecamatan tujuan!");
+    }
+    if (!selectedProduct) {
+        return alert("Pilih produk terlebih dahulu!");
+    }
 
-    resDiv.innerHTML = "🔍 Menghubungkan ke Biteship...";
+    resDiv.innerHTML = "🔍 Sedang menghubungi Biteship...";
 
     try {
-        const bodyReq = {
+        const payload = {
             origin_id: ORIGIN_ID,
-            destination_name: area, 
+            destination_name: alamatTujuan, // Data ini yang tadi dianggap kosong
             items: [{
                 name: selectedProduct.name.substring(0, 40),
                 value: parseInt(selectedProduct.price),
@@ -67,33 +73,32 @@ async function handleCekOngkir() {
             }]
         };
 
-        const resp = await fetch('https://api.biteship.com/v1/rates/couriers', {
+        const response = await fetch('https://api.biteship.com/v1/rates/couriers', {
             method: 'POST',
             headers: { 
                 'Authorization': BITESHIP_API_KEY, 
                 'Content-Type': 'application/json' 
             },
-            body: JSON.stringify(bodyReq)
+            body: JSON.stringify(payload)
         });
 
-        const data = await resp.json();
+        const data = await response.json();
         
-        // CEK APAKAH SUKSES
         if (data.success && data.pricing && data.pricing.length > 0) {
             resDiv.innerHTML = data.pricing.map(s => `
-                <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})" style="border:1px solid #d4af37; padding:10px; margin:5px 0; cursor:pointer; border-radius:8px; background: #333;">
-                    <b>${s.courier_name.toUpperCase()}</b> - ${s.courier_service}<br>
-                    Harga: Rp${s.price.toLocaleString('id-ID')} | Estimasi: ${s.duration}
+                <div class="shipping-item" onclick="setFinal('${s.courier_name}', '${s.courier_service}', ${s.price})" 
+                     style="border:1px solid #d4af37; padding:10px; margin:5px 0; cursor:pointer; background:#333; border-radius:8px;">
+                    <strong>${s.courier_name.toUpperCase()}</strong> - ${s.courier_service}<br>
+                    Harga: Rp${s.price.toLocaleString('id-ID')}
                 </div>
             `).join('');
         } else {
-            // TAMPILKAN ERROR ASLI DARI BITESHIP AGAR KITA TAHU MASALAHNYA
-            const errorDetail = data.error || data.message || "Lokasi tidak ditemukan";
-            resDiv.innerHTML = `<p style="color:#ff9800;">Biteship berkata: <b>${errorDetail}</b><br><br>
-            Tips: Ketik dengan format <b>Kecamatan, Kota</b> (Contoh: Wonokromo, Surabaya)</p>`;
+            // Jika masih error, tampilkan detail pesan dari Biteship
+            const pesanError = data.error || data.message || "Lokasi tidak ditemukan";
+            resDiv.innerHTML = `<p style="color:orange;">Gagal: ${pesanError}</p>`;
         }
     } catch (err) {
-        resDiv.innerHTML = "<p style='color:red;'>Gagal koneksi. Periksa saldo Biteship atau API Key.</p>";
+        resDiv.innerHTML = "<p style='color:red;'>Terjadi gangguan jaringan.</p>";
     }
 }
 
@@ -125,4 +130,5 @@ function kirimKeWhatsApp() {
 
 // Jalankan
 loadProducts();
+
 
